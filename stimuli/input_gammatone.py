@@ -19,14 +19,12 @@
 # +
 from itertools import product
 from pathlib import Path
-from random import Random
 
-import tqdm
-from eelbrain import *
 import librosa
 import numba
-import numpy
+import tqdm
 import trftools
+from eelbrain import *
 
 INPUT_ROOT = Path('/Volumes/Seagate BarracudaFastSSD/EARSHOT')
 WAV_ROOT = INPUT_ROOT / 'EARSHOT_NEW_WAVS'
@@ -48,9 +46,6 @@ def find_last(vec):
     return 0
 
 
-
-# -
-
 # # Silence
 
 waves = {}
@@ -62,7 +57,7 @@ for path in WAV_ROOT.glob('*/*.WAV'):
     duration = len(wave)
     if (duration - stop) > 1000:
         wave = wave2
-        uts = UTS(0, 1/srate, len(wave))
+        uts = UTS(0, 1 / srate, len(wave))
         waves[path.stem] = NDVar(wave, uts, name=path.stem)
         if len(waves) >= 9:
             break
@@ -70,10 +65,11 @@ for path in WAV_ROOT.glob('*/*.WAV'):
 plot.UTS(waves.values(), ncol=3)
 
 gts = [trftools.gammatone_bank(wav, 50, 10000, n=100, tstep=0.001) for wav in waves.values()]
-gts = [trftools.pad(gt, -0.010, gt.time.tstop+0.010) for gt in gts]
+gts = [trftools.pad(gt, -0.010, gt.time.tstop + 0.010) for gt in gts]
 p = plot.Array(gts, ncol=3, interpolation='none', vmax=0.1)
 
-gts = [trftools.gammatone_bank(trftools.pad(wav, -0.010, wav.time.tstop+0.010), 50, 10000, n=100, tstep=0.001) for wav in waves.values()]
+gts = [trftools.gammatone_bank(trftools.pad(wav, -0.010, wav.time.tstop + 0.010), 50, 10000, n=100, tstep=0.001) for wav
+       in waves.values()]
 p = plot.Array(gts, ncol=3, interpolation='none', vmax=0.1)
 display(p)
 
@@ -86,10 +82,9 @@ for speaker in ['PRINCESS', 'FRED']:
     for word in ['LARK', 'LARD', 'LAST']:
         path = WAV_ROOT / speaker.title() / f'{word}_{speaker}.WAV'
         wave, srate = librosa.core.load(path)
-#         wave, trim = librosa.effects.trim(wave, frame_length=32, hop_length=16)
-        uts = UTS(0, 1/srate, len(wave))
+        #         wave, trim = librosa.effects.trim(wave, frame_length=32, hop_length=16)
+        uts = UTS(0, 1 / srate, len(wave))
         waves[speaker, word] = NDVar(wave, uts, name=path.stem)
-
 
 p = plot.UTS(waves.values(), ncol=3)
 
@@ -101,7 +96,7 @@ p = plot.UTS(waves.values(), ncol=3)
 def make(start, n=64):
     out = [start]
     for i in range(n):
-        out.append(out[-1] * 9/8)
+        out.append(out[-1] * 9 / 8)
     print(' '.join(f'{f:.0f}' for f in out))
 
 
@@ -131,7 +126,7 @@ res = 100  # Hz
 tstep = 1 / res
 DST_ROOT = INPUT_ROOT / f'GAMMATONE_{n_bands}_{res}'
 DST_ROOT.mkdir(exist_ok=True)
-for path in tqdm.tqdm(WAV_ROOT.glob('*/*.WAV'), total=15*2063):
+for path in tqdm.tqdm(WAV_ROOT.glob('*/*.WAV'), total=15 * 2063):
     word, speaker = path.stem.split('_')
     wave, srate = librosa.core.load(path)
     # trim silence
@@ -139,7 +134,7 @@ for path in tqdm.tqdm(WAV_ROOT.glob('*/*.WAV'), total=15*2063):
     stop = find_last(wave)
     wave = wave[start: stop]
     # NDVar
-    uts = UTS(0, 1/srate, len(wave))
+    uts = UTS(0, 1 / srate, len(wave))
     wav = NDVar(wave, uts, name=path.stem)
     # gammatones
     gt = trftools.gammatone_bank(wav, 50, 10000, n=n_bands, tstep=tstep)
@@ -148,7 +143,6 @@ for path in tqdm.tqdm(WAV_ROOT.glob('*/*.WAV'), total=15*2063):
     save.pickle(gt.x, dst_dir / f'{path.stem}.pickle')
 
 # -
-
 
 
 gts = [trftools.gammatone_bank(wav, 50, 10000, n, tstep=0.01) for n in (40, 50, 100)]
@@ -200,9 +194,9 @@ for speaker, word in tqdm.tqdm(product(SPEAKERS, LEXICON), total=total):
     # Store for making predictors
     if speaker == 'MALD':
         mald_data.append([word, start / srate, (stop - start) / srate])
-#     continue
+    #     continue
     # NDVar
-    uts = UTS(0, 1/srate, len(wave))
+    uts = UTS(0, 1 / srate, len(wave))
     wav = NDVar(wave, uts, name=name)
     # gammatones
     gt = trftools.gammatone_bank(wav, 50, 10000, n=n_bands, tstep=tstep)
